@@ -1,0 +1,495 @@
+/* =================================================================
+   COMPREHENSIVE MOBILE UI FIXES FOR ANDROID APP
+   Applied only on mobile screens - Desktop unaffected
+   ================================================================= */
+
+/* Global Mobile Fixes */
+@media (max-width: 768px) {
+
+    /* Prevent any horizontal scroll */
+    html,
+    body {
+        overflow-x: hidden;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* All containers should respect mobile width */
+    * {
+        max-width: 100vw;
+        box-sizing: border-box;
+    }
+
+    /* Fix any absolute/fixed positioned elements */
+    .fixed,
+    .absolute {
+        max-width: 100vw;
+    }
+}
+
+/* Button Fixes - Touch Friendly */
+@media (max-width: 768px) {
+
+    button,
+    .btn,
+    a.btn {
+        min-height: 44px;
+        /* iOS/Android touch target */
+        padding: var(--spacing-3) var(--spacing-4);
+        font-size: var(--text-base);
+    }
+
+    .btn-sm {
+        min-height: 36px;
+        padding: var(--spacing-2) var(--spacing-3);
+    }
+}
+
+/* Form Inputs - Prevent iOS Zoom */
+@media (max-width: 768px) {
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px !important;
+        /* Prevent iOS zoom on focus */
+    }
+}
+
+/* Table Fixes - Horizontal Scroll */
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 calc(-1 * var(--spacing-4));
+        padding: 0 var(--spacing-4);
+    }
+
+    .table {
+        min-width: 600px;
+        width: max-content;
+    }
+
+    .table th,
+    .table td {
+        padding: var(--spacing-2) var(--spacing-3);
+        white-space: nowrap;
+    }
+
+    /* Action buttons in tables */
+    .table .btn {
+        padding: var(--spacing-1) var(--spacing-2);
+        font-size: var(--text-xs);
+    }
+}
+
+/* Grid Fixes - Single Column on Mobile */
+@media (max-width: 768px) {
+
+    .grid-cols-2,
+    .grid-cols-3,
+    .grid-cols-4,
+    [style*="grid-template-columns: repeat(2"],
+    [style*="grid-template-columns: repeat(3"],
+    [style*="grid-template-columns: repeat(4"],
+    [style*="grid-template-columns: repeat(auto-fit"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Summary grids */
+    .summary-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-3);
+    }
+}
+
+/* Card Fixes */
+@media (max-width: 768px) {
+
+    .card,
+    .section-card {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        border-radius: var(--radius-lg);
+    }
+
+    .card-body,
+    .section-body {
+        padding: var(--spacing-4);
+    }
+
+    .card-header,
+    .section-header {
+        padding: var(--spacing-4);
+        flex-wrap: wrap;
+        gap: var(--spacing-2);
+    }
+}
+
+/* Modal Fixes - Bottom Sheet Style */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .modal-content {
+        width: 100%;
+        max-width: 100%;
+        max-height: 85vh;
+        margin: 0;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        padding: var(--spacing-4);
+    }
+
+    /* Modal form grids to single column */
+    .modal-content [style*="grid-template-columns: 1fr 1fr"],
+    .modal-content [style*="display: grid"] {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .modal-header {
+        margin-bottom: var(--spacing-3);
+        padding-bottom: var(--spacing-3);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .modal-close {
+        font-size: 28px;
+        padding: var(--spacing-2);
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: var(--spacing-2);
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Page Header Fixes */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: var(--spacing-3);
+    }
+
+    .page-header h1 {
+        font-size: var(--text-xl);
+    }
+
+    .page-header .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .header-actions .btn,
+    .header-actions .form-select {
+        width: 100%;
+    }
+}
+
+/* Stats/Summary Cards */
+@media (max-width: 768px) {
+
+    .summary-card,
+    .stat-card {
+        padding: var(--spacing-4);
+    }
+
+    .summary-icon,
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .summary-content h3,
+    .stat-value {
+        font-size: var(--text-xl);
+    }
+}
+
+/* Filter/Search Sections */
+@media (max-width: 768px) {
+
+    .filter-grid,
+    .search-grid,
+    [style*="grid-template-columns: repeat(auto-fit"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: var(--spacing-3);
+    }
+
+    .filter-item,
+    .search-item {
+        width: 100%;
+    }
+}
+
+/* Dashboard Specific Fixes */
+@media (max-width: 768px) {
+    .dashboard-content {
+        padding: var(--spacing-4);
+        overflow-x: hidden;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Quick stats in dashboard */
+    .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+        /* 2 columns on mobile */
+        gap: var(--spacing-3);
+    }
+}
+
+/* Typography Adjustments */
+@media (max-width: 768px) {
+    h1 {
+        font-size: var(--text-2xl);
+    }
+
+    h2 {
+        font-size: var(--text-xl);
+    }
+
+    h3 {
+        font-size: var(--text-lg);
+    }
+
+    h4 {
+        font-size: var(--text-base);
+    }
+
+    .section-title {
+        font-size: var(--text-xl);
+    }
+
+    .section-subtitle {
+        font-size: var(--text-sm);
+    }
+}
+
+/* Spacing Adjustments */
+@media (max-width: 768px) {
+    .p-6 {
+        padding: var(--spacing-4);
+    }
+
+    .p-8 {
+        padding: var(--spacing-5);
+    }
+
+    .py-8 {
+        padding-top: var(--spacing-5);
+        padding-bottom: var(--spacing-5);
+    }
+
+    .px-8 {
+        padding-left: var(--spacing-5);
+        padding-right: var(--spacing-5);
+    }
+
+    .mb-6 {
+        margin-bottom: var(--spacing-4);
+    }
+
+    .mb-8 {
+        margin-bottom: var(--spacing-5);
+    }
+
+    .mt-6 {
+        margin-top: var(--spacing-4);
+    }
+
+    .mt-8 {
+        margin-top: var(--spacing-5);
+    }
+}
+
+/* Image Fixes */
+@media (max-width: 768px) {
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .profile-avatar,
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* List/Timeline Fixes */
+@media (max-width: 768px) {
+
+    .timeline,
+    .activity-list,
+    .notification-list {
+        padding-left: var(--spacing-2);
+    }
+
+    .timeline-item,
+    .activity-item {
+        padding: var(--spacing-3);
+    }
+}
+
+/* Prevent Text Overflow */
+@media (max-width: 768px) {
+
+    .text-truncate,
+    .truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Allow long text to wrap on mobile */
+    .mobile-wrap {
+        white-space: normal !important;
+        word-wrap: break-word;
+    }
+}
+
+/* Fix Dropdowns */
+@media (max-width: 768px) {
+    .dropdown-menu {
+        width: 100%;
+        max-width: 280px;
+    }
+
+    select,
+    .form-select {
+        width: 100%;
+        background-position: right var(--spacing-3) center;
+    }
+}
+
+/* Badge/Chip Fixes */
+@media (max-width: 768px) {
+
+    .badge,
+    .chip {
+        font-size: var(--text-xs);
+        padding: var(--spacing-1) var(--spacing-2);
+    }
+}
+
+/* Alert/Notification Fixes */
+@media (max-width: 768px) {
+    .alert {
+        padding: var(--spacing-3) var(--spacing-4);
+        font-size: var(--text-sm);
+    }
+}
+
+/* Tabs Fixes */
+@media (max-width: 768px) {
+    .tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tab {
+        min-width: 100px;
+        font-size: var(--text-sm);
+    }
+}
+
+/* Footer Fixes */
+@media (max-width: 768px) {
+    .footer-grid {
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-6);
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        gap: var(--spacing-4);
+        text-align: center;
+    }
+}
+
+/* Very Small Screens (< 480px) */
+@media (max-width: 480px) {
+
+    .dashboard-content,
+    .main-content {
+        padding: var(--spacing-3);
+    }
+
+    .section-card,
+    .card {
+        padding: var(--spacing-3);
+    }
+
+    .btn {
+        padding: var(--spacing-2) var(--spacing-3);
+        font-size: var(--text-sm);
+    }
+
+    h1 {
+        font-size: var(--text-xl);
+    }
+
+    h2 {
+        font-size: var(--text-lg);
+    }
+
+    .quick-stats {
+        grid-template-columns: 1fr;
+        /* Single column on very small screens */
+    }
+}
+
+/* Android Specific Fixes */
+@media (max-width: 768px) {
+
+    /* Remove tap highlight */
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Smooth scrolling */
+    html {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Fix input zoom on Android */
+    input:focus,
+    select:focus,
+    textarea:focus {
+        font-size: 16px;
+    }
+}
+
+/* Landscape Mode Fixes */
+@media (max-width: 768px) and (orientation: landscape) {
+    .dashboard-header {
+        padding: var(--spacing-2) var(--spacing-4);
+    }
+
+    .modal-content {
+        max-height: 90vh;
+    }
+}
