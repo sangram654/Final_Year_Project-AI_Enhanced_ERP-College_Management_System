@@ -50,126 +50,132 @@ async def db_status():
 @app.on_event("startup")
 async def auto_seed_db():
     try:
-        count = await db.users.count_documents({})
-        if count == 0:
-            print("🌱 Empty database detected. Seeding demo accounts into MongoDB...")
-            from datetime import datetime
-            from .middleware.auth import hash_password
+        from datetime import datetime
+        from .middleware.auth import hash_password
 
-            demo_users = [
-                {
-                    "email": "superadmin@samarthcollege.edu.in",
-                    "password": hash_password("superadmin@123"),
-                    "role": "super_admin",
-                    "firstName": "Super",
-                    "lastName": "Admin",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "superadmin123@gmail.com",
-                    "password": hash_password("superadmin@123"),
-                    "role": "super_admin",
-                    "firstName": "Super",
-                    "lastName": "Admin",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "admin@samarthcollege.edu.in",
-                    "password": hash_password("admin@123"),
-                    "role": "admin",
-                    "firstName": "College",
-                    "lastName": "Admin",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "admin123@gmail.com",
-                    "password": hash_password("admin@123"),
-                    "role": "admin",
-                    "firstName": "College",
-                    "lastName": "Admin",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "teacher@samarthcollege.edu.in",
-                    "password": hash_password("teacher@123"),
-                    "role": "teacher",
-                    "firstName": "Rajesh",
-                    "lastName": "Patil",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "ramkadam123@gmail.com",
-                    "password": hash_password("ramkadam@123"),
-                    "role": "teacher",
-                    "firstName": "Ram",
-                    "lastName": "Kadam",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "student@samarthcollege.edu.in",
-                    "password": hash_password("student@123"),
-                    "role": "student",
-                    "firstName": "Rahul",
-                    "lastName": "Patil",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "parent@samarthcollege.edu.in",
-                    "password": hash_password("parent@123"),
-                    "role": "parent",
-                    "firstName": "Suresh",
-                    "lastName": "Patil",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "accountant@gmail.com",
-                    "password": hash_password("accountant@123"),
-                    "role": "accountant",
-                    "firstName": "Rohan",
-                    "lastName": "Jadhav",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "librarian@gmail.com",
-                    "password": hash_password("librarian@123"),
-                    "role": "librarian",
-                    "firstName": "Amit",
-                    "lastName": "Kadam",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                },
-                {
-                    "email": "receptionist@gmail.com",
-                    "password": hash_password("receptionist@123"),
-                    "role": "receptionist",
-                    "firstName": "Sneha",
-                    "lastName": "Shinde",
-                    "isActive": True,
-                    "createdAt": datetime.utcnow(),
-                    "updatedAt": datetime.utcnow()
-                }
-            ]
-            await db.users.insert_many(demo_users)
-            print("✅ Demo accounts successfully seeded into database!")
+        demo_users = [
+            {
+                "email": "superadmin@samarthcollege.edu.in",
+                "password": hash_password("superadmin@123"),
+                "role": "super_admin",
+                "firstName": "Super",
+                "lastName": "Admin",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "superadmin123@gmail.com",
+                "password": hash_password("superadmin@123"),
+                "role": "super_admin",
+                "firstName": "Super",
+                "lastName": "Admin",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "admin@samarthcollege.edu.in",
+                "password": hash_password("admin@123"),
+                "role": "admin",
+                "firstName": "College",
+                "lastName": "Admin",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "admin123@gmail.com",
+                "password": hash_password("admin@123"),
+                "role": "admin",
+                "firstName": "College",
+                "lastName": "Admin",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "teacher@samarthcollege.edu.in",
+                "password": hash_password("teacher@123"),
+                "role": "teacher",
+                "firstName": "Rajesh",
+                "lastName": "Patil",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "ramkadam123@gmail.com",
+                "password": hash_password("ramkadam@123"),
+                "role": "teacher",
+                "firstName": "Ram",
+                "lastName": "Kadam",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "student@samarthcollege.edu.in",
+                "password": hash_password("student@123"),
+                "role": "student",
+                "firstName": "Rahul",
+                "lastName": "Patil",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "parent@samarthcollege.edu.in",
+                "password": hash_password("parent@123"),
+                "role": "parent",
+                "firstName": "Suresh",
+                "lastName": "Patil",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "accountant@gmail.com",
+                "password": hash_password("accountant@123"),
+                "role": "accountant",
+                "firstName": "Rohan",
+                "lastName": "Jadhav",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "librarian@gmail.com",
+                "password": hash_password("librarian@123"),
+                "role": "librarian",
+                "firstName": "Amit",
+                "lastName": "Kadam",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "receptionist@gmail.com",
+                "password": hash_password("receptionist@123"),
+                "role": "receptionist",
+                "firstName": "Sneha",
+                "lastName": "Shinde",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            }
+        ]
+
+        for u in demo_users:
+            existing = await db.users.find_one({"email": u["email"]})
+            if not existing:
+                await db.users.insert_one(u)
+            else:
+                await db.users.update_one(
+                    {"email": u["email"]},
+                    {"$set": {"password": u["password"], "isActive": True}}
+                )
+        print("✅ Demo accounts verified and active in MongoDB Database!")
     except Exception as e:
         print(f"⚠️ Auto-seed warning: {e}")
 
