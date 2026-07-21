@@ -246,35 +246,62 @@ if frontend_build_path:
     if os.path.exists(static_dir):
         app.mount("/static", StaticFiles(directory=static_dir), name="frontend-static")
     
+    def _get_latest_bundle_files(build_path: str):
+        """Detect the latest JS and CSS bundle filenames at runtime."""
+        js_file = "main.js"
+        css_file = "main.css"
+        try:
+            js_dir = os.path.join(build_path, "static", "js")
+            if os.path.exists(js_dir):
+                js_candidates = [f for f in os.listdir(js_dir)
+                                 if f.startswith("main.") and f.endswith(".js")
+                                 and not f.endswith(".map") and not f.endswith(".txt")]
+                if js_candidates:
+                    js_file = js_candidates[0]
+            css_dir = os.path.join(build_path, "static", "css")
+            if os.path.exists(css_dir):
+                css_candidates = [f for f in os.listdir(css_dir)
+                                  if f.startswith("main.") and f.endswith(".css")
+                                  and not f.endswith(".map")]
+                if css_candidates:
+                    css_file = css_candidates[0]
+        except Exception:
+            pass
+        return js_file, css_file
+
     @app.get("/{catchall:path}")
     async def serve_frontend(catchall: str):
+        from fastapi.responses import HTMLResponse
         # Ignore API and socket routes
         if catchall.startswith("api") or catchall.startswith("socket.io") or catchall.startswith("uploads"):
             raise fastapi.HTTPException(status_code=404, detail="Not Found")
-            
+
+        # Serve any specific static asset that exists (images, PDFs, etc.)
         file_path = os.path.join(frontend_build_path, catchall)
         if catchall and os.path.isfile(file_path):
             return FileResponse(file_path)
-        
-        # Handle JS/CSS bundle hash mismatch: if browser requests old hash, serve the actual bundle
+
+        # Handle JS/CSS bundle hash mismatch: serve the actual latest bundle
         if catchall.startswith("static/js/main.") and catchall.endswith(".js"):
             js_dir = os.path.join(frontend_build_path, "static", "js")
             if os.path.exists(js_dir):
-                js_files = [f for f in os.listdir(js_dir) if f.startswith("main.") and f.endswith(".js") and not f.endswith(".map") and not f.endswith(".txt")]
+                js_files = [f for f in os.listdir(js_dir) if f.startswith("main.") and f.endswith(".js")
+                            and not f.endswith(".map") and not f.endswith(".txt")]
                 if js_files:
                     return FileResponse(os.path.join(js_dir, js_files[0]), media_type="application/javascript")
-        
+
         if catchall.startswith("static/css/main.") and catchall.endswith(".css"):
             css_dir = os.path.join(frontend_build_path, "static", "css")
             if os.path.exists(css_dir):
-                css_files = [f for f in os.listdir(css_dir) if f.startswith("main.") and f.endswith(".css") and not f.endswith(".map")]
+                css_files = [f for f in os.listdir(css_dir) if f.startswith("main.") and f.endswith(".css")
+                             and not f.endswith(".map")]
                 if css_files:
                     return FileResponse(os.path.join(css_dir, css_files[0]), media_type="text/css")
-            
-        index_file = os.path.join(frontend_build_path, "index.html")
-        if os.path.exists(index_file):
-            return FileResponse(index_file)
-        return {"status": "online", "message": "SAMARTH ERP Python Backend is running."}
+
+        # Always serve a dynamically-generated index.html with correct bundle hashes
+        js_file, css_file = _get_latest_bundle_files(frontend_build_path)
+        html_content = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/favicon.ico"/><script src="https://checkout.razorpay.com/v1/checkout.js"></script><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><meta name="theme-color" content="#1e3a5f"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="mobile-web-app-capable" content="yes"/><meta name="description" content="Samarth College of Engineering &amp; Management - Educational ERP System for managing academic, administrative, and financial operations"/><meta name="keywords" content="ERP, College, Education, Samarth, Engineering, Management, Belhe"/><meta name="author" content="Samarth College"/><link rel="apple-touch-icon" href="/logo192.png"/><link rel="manifest" href="/manifest.json"/><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><title>Samarth College ERP System</title><script defer="defer" src="/static/js/{js_file}"></script><link href="/static/css/{css_file}" rel="stylesheet"></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div></body></html>"""
+        return HTMLResponse(content=html_content)
 else:
     @app.get("/")
     async def root():
