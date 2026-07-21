@@ -3,11 +3,17 @@ import bcrypt
 from datetime import datetime
 from pymongo import MongoClient
 
-MONGO_URI = "mongodb://127.0.0.1:27017/ERP_System"
+import os
 
 def get_db():
-    client = MongoClient(MONGO_URI)
-    return client.get_default_database()
+    mongo_uri = os.getenv("MONGODB_URI", "mongodb://127.0.0.1:27017/ERP_System")
+    client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+    try:
+        raw_name = mongo_uri.split("/")[-1].split("?")[0]
+        db_name = raw_name if raw_name else "ERP_System"
+    except Exception:
+        db_name = "ERP_System"
+    return client[db_name]
 
 def hash_pwd(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
