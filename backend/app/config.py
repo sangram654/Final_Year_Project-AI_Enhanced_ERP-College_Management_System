@@ -23,3 +23,7 @@ class Settings(BaseSettings):
         extra = 'ignore'
 
 settings = Settings()
+
+# Force override MONGODB_URI if provided in system environment (e.g. Railway)
+if "MONGODB_URI" in os.environ and os.environ["MONGODB_URI"].strip():
+    settings.MONGODB_URI = os.environ["MONGODB_URI"].strip()
