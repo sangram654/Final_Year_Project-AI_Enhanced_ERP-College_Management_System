@@ -48,7 +48,10 @@ def generate_token(user_id: str, role: str, email: str) -> str:
         "email": email,
         "exp": datetime.utcnow() + timedelta(days=days)
     }
-    return jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
+    token = jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
+    if isinstance(token, bytes):
+        token = token.decode('utf-8')
+    return token
 
 def decode_token(token: str) -> Optional[dict]:
     try:

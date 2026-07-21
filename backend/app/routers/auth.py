@@ -219,99 +219,113 @@ DEMO_PASSWORDS = {
 # @route   POST /api/auth/login
 @router.post("/auth/login")
 async def login(payload: UserLogin):
-    email_clean = payload.email.strip().lower()
-    print(f"[LOGIN DEBUG] Attempting login for email: {email_clean}")
-    
-    user = await db.users.find_one({"email": email_clean})
-    if not user:
-        user = await db.users.find_one({"email": {"$regex": f"^{email_clean}$", "$options": "i"}})
+    try:
+        email_clean = payload.email.strip().lower()
+        print(f"[LOGIN DEBUG] Attempting login for email: {email_clean}")
         
-    if not user and email_clean in DEMO_PASSWORDS:
-        print(f"[LOGIN DEBUG] Creating missing demo account on the fly: {email_clean}")
-        role_map = {
-            "superadmin@samarthcollege.edu.in": "super_admin",
-            "superadmin123@gmail.com": "super_admin",
-            "admin@samarthcollege.edu.in": "admin",
-            "admin123@gmail.com": "admin",
-            "teacher@samarthcollege.edu.in": "teacher",
-            "ramkadam123@gmail.com": "teacher",
-            "rahulpatil123@gmail.com": "student",
-            "student@samarthcollege.edu.in": "student",
-            "sureshpatilparent123@gmail.com": "parent",
-            "parent@samarthcollege.edu.in": "parent",
-            "accountant@gmail.com": "accountant",
-            "librarian@gmail.com": "librarian",
-            "receptionist@gmail.com": "receptionist",
-        }
-        role = role_map.get(email_clean, "admin")
-        user_doc = {
-            "email": email_clean,
-            "password": hash_password(DEMO_PASSWORDS[email_clean]),
-            "role": role,
-            "firstName": role.replace("_", " ").title(),
-            "lastName": "User",
-            "isActive": True,
-            "createdAt": datetime.utcnow(),
-            "updatedAt": datetime.utcnow()
-        }
-        res = await db.users.insert_one(user_doc)
-        user_doc["_id"] = res.inserted_id
-        user = user_doc
+        user = await db.users.find_one({"email": email_clean})
+        if not user:
+            user = await db.users.find_one({"email": {"$regex": f"^{email_clean}$", "$options": "i"}})
+            
+        if not user and email_clean in DEMO_PASSWORDS:
+            print(f"[LOGIN DEBUG] Creating missing demo account on the fly: {email_clean}")
+            role_map = {
+                "superadmin@samarthcollege.edu.in": "super_admin",
+                "superadmin123@gmail.com": "super_admin",
+                "admin@samarthcollege.edu.in": "admin",
+                "admin123@gmail.com": "admin",
+                "teacher@samarthcollege.edu.in": "teacher",
+                "ramkadam123@gmail.com": "teacher",
+                "rahulpatil123@gmail.com": "student",
+                "student@samarthcollege.edu.in": "student",
+                "sureshpatilparent123@gmail.com": "parent",
+                "parent@samarthcollege.edu.in": "parent",
+                "accountant@gmail.com": "accountant",
+                "librarian@gmail.com": "librarian",
+                "receptionist@gmail.com": "receptionist",
+            }
+            role = role_map.get(email_clean, "admin")
+            user_doc = {
+                "email": email_clean,
+                "password": hash_password(DEMO_PASSWORDS[email_clean]),
+                "role": role,
+                "firstName": role.replace("_", " ").title(),
+                "lastName": "User",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            }
+            res = await db.users.insert_one(user_doc)
+            user_doc["_id"] = res.inserted_id
+            user = user_doc
 
-    if not user:
-        print(f"[LOGIN DEBUG] User not found in database for email: {email_clean}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
-        )
+        if not user:
+            print(f"[LOGIN DEBUG] User not found in database for email: {email_clean}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials"
+            )
+            
+        if not user.get("isActive", True):
+            print(f"[LOGIN DEBUG] User {email_clean} is inactive.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Your account has been deactivated. Please contact admin."
+            )
+            
+        expected_demo_pwd = DEMO_PASSWORDS.get(email_clean)
+        is_correct = False
+        if expected_demo_pwd and payload.password == expected_demo_pwd:
+            is_correct = True
+        else:
+            is_correct = await verify_password_async(payload.password, user["password"])
+            
+        if not is_correct:
+            print(f"[LOGIN DEBUG] Password verification failed for {email_clean}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials"
+            )
+            
+        try:
+            await db.users.update_one({"_id": user["_id"]}, {"$set": {"lastLogin": datetime.utcnow()}})
+        except Exception:
+            pass
         
-    if not user.get("isActive", True):
-        print(f"[LOGIN DEBUG] User {email_clean} is inactive.")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Your account has been deactivated. Please contact admin."
-        )
+        user_serialized = serialize_doc(user)
+        profile = await ensure_user_profile(user_serialized)
         
-    expected_demo_pwd = DEMO_PASSWORDS.get(email_clean)
-    is_correct = False
-    if expected_demo_pwd and payload.password == expected_demo_pwd:
-        is_correct = True
-    else:
-        is_correct = await verify_password_async(payload.password, user["password"])
+        token = generate_token(user["_id"], user["role"], user["email"])
+        if isinstance(token, bytes):
+            token = token.decode('utf-8')
         
-    if not is_correct:
-        print(f"[LOGIN DEBUG] Password verification failed for {email_clean}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
-        )
-        
-    await db.users.update_one({"_id": user["_id"]}, {"$set": {"lastLogin": datetime.utcnow()}})
-    
-    user_serialized = serialize_doc(user)
-    profile = await ensure_user_profile(user_serialized)
-    
-    token = generate_token(user["_id"], user["role"], user["email"])
-    
-    user_info = {
-        "id": str(user["_id"]),
-        "email": user["email"],
-        "role": user["role"],
-        "firstName": user.get("firstName", "User"),
-        "lastName": user.get("lastName", ""),
-        "fullName": f"{user.get('firstName', '')} {user.get('lastName', '')}".strip(),
-        "profileImage": user.get("profileImage")
-    }
-    
-    return {
-        "success": True,
-        "message": "Login successful",
-        "data": {
-            "user": user_info,
-            "profile": profile,
-            "token": token
+        user_info = {
+            "id": str(user["_id"]),
+            "email": user["email"],
+            "role": user["role"],
+            "firstName": user.get("firstName", "User"),
+            "lastName": user.get("lastName", ""),
+            "fullName": f"{user.get('firstName', '')} {user.get('lastName', '')}".strip(),
+            "profileImage": user.get("profileImage")
         }
-    }
+        
+        return {
+            "success": True,
+            "message": "Login successful",
+            "data": {
+                "user": user_info,
+                "profile": profile,
+                "token": token
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as err:
+        print(f"❌ Login error: {err}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Login failed: {str(err)}"
+        )
 
 # @route   GET /api/auth/me
 @router.get("/auth/me")
