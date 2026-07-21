@@ -55,8 +55,20 @@ app.mount("/socket.io", socket_app)
 from fastapi.responses import FileResponse
 
 # Serve React Frontend static files if build exists
-frontend_build_path = os.path.abspath("../frontend/build")
-if os.path.exists(frontend_build_path):
+possible_paths = [
+    os.path.abspath("./static_frontend"),
+    os.path.abspath("static_frontend"),
+    os.path.abspath("../frontend/build"),
+    os.path.abspath("frontend/build"),
+]
+
+frontend_build_path = None
+for p in possible_paths:
+    if os.path.exists(p):
+        frontend_build_path = p
+        break
+
+if frontend_build_path:
     print(f"Serving frontend from: {frontend_build_path}")
     app.mount("/static", StaticFiles(directory=os.path.join(frontend_build_path, "static")), name="frontend-static")
     
