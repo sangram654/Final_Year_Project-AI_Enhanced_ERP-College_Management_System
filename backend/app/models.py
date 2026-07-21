@@ -1,6 +1,9 @@
-from pydantic import BaseModel, Field, EmailStr
+# pyrefly: ignore [missing-import]
+from app.database import db
+from pydantic import BaseModel, Field, EmailStr 
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+# pyrefly: ignore [missing-import]
 from bson import ObjectId
 
 # Serialize MongoDB Document to Python Dict / JSON
