@@ -70,7 +70,9 @@ for p in possible_paths:
 
 if frontend_build_path:
     print(f"Serving frontend from: {frontend_build_path}")
-    app.mount("/static", StaticFiles(directory=os.path.join(frontend_build_path, "static")), name="frontend-static")
+    static_dir = os.path.join(frontend_build_path, "static")
+    if os.path.exists(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="frontend-static")
     
     @app.get("/{catchall:path}")
     async def serve_frontend(catchall: str):
@@ -83,7 +85,9 @@ if frontend_build_path:
             return FileResponse(file_path)
             
         index_file = os.path.join(frontend_build_path, "index.html")
-        return FileResponse(index_file)
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return {"status": "online", "message": "SAMARTH ERP Python Backend is running."}
 else:
     @app.get("/")
     async def root():
