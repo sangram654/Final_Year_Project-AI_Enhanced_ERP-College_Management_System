@@ -16,76 +16,97 @@ router = APIRouter()
 
 # Helper to ensure role-specific profile document exists
 async def ensure_user_profile(user: dict) -> Optional[dict]:
-    role = user.get("role")
-    user_id = ObjectId(user.get("_id") or user.get("id"))
-    profile = None
-    
-    if role == 'student':
-        student_profile_id = user.get("studentProfile")
-        if student_profile_id:
-            profile = await db.students.find_one({"_id": ObjectId(student_profile_id)})
-        if not profile:
-            profile = await db.students.find_one({"user": user_id})
-        if not profile:
-            roll_number = 'STU_' + str(int(datetime.now().timestamp()))[-6:]
-            profile = {
-                "user": user_id,
-                "rollNumber": roll_number,
-                "department": "Computer Engineering",
-                "course": "B.E.",
-                "semester": 1,
-                "batch": str(datetime.now().year),
-                "dateOfBirth": datetime(2004, 1, 1),
-                "gender": "Male",
-                "isActive": True
-            }
-            res = await db.students.insert_one(profile)
-            profile["_id"] = res.inserted_id
+    try:
+        role = user.get("role")
+        raw_id = user.get("_id") or user.get("id")
+        if not raw_id:
+            return None
             
-        if not student_profile_id or str(student_profile_id) != str(profile["_id"]):
-            await db.users.update_one({"_id": user_id}, {"$set": {"studentProfile": profile["_id"]}})
+        try:
+            user_id = ObjectId(str(raw_id)) if not isinstance(raw_id, ObjectId) else raw_id
+        except Exception:
+            user_id = str(raw_id)
             
-    elif role in ['teacher', 'admin']:
-        teacher_profile_id = user.get("teacherProfile")
-        if teacher_profile_id:
-            profile = await db.teachers.find_one({"_id": ObjectId(teacher_profile_id)})
-        if not profile:
-            profile = await db.teachers.find_one({"user": user_id})
-        if not profile:
-            employee_id = 'EMP_' + str(int(datetime.now().timestamp()))[-6:]
-            profile = {
-                "user": user_id,
-                "employeeId": employee_id,
-                "department": "Computer Engineering",
-                "designation": "Lecturer",
-                "qualification": "B.E. / M.E.",
-                "experience": 1
-            }
-            res = await db.teachers.insert_one(profile)
-            profile["_id"] = res.inserted_id
-            
-        if not teacher_profile_id or str(teacher_profile_id) != str(profile["_id"]):
-            await db.users.update_one({"_id": user_id}, {"$set": {"teacherProfile": profile["_id"]}})
-            
-    elif role == 'parent':
-        parent_profile_id = user.get("parentProfile")
-        if parent_profile_id:
-            profile = await db.parents.find_one({"_id": ObjectId(parent_profile_id)})
-        if not profile:
-            profile = await db.parents.find_one({"user": user_id})
-        if not profile:
-            profile = {
-                "user": user_id,
-                "relation": "Father",
-                "students": []
-            }
-            res = await db.parents.insert_one(profile)
-            profile["_id"] = res.inserted_id
-            
-        if not parent_profile_id or str(parent_profile_id) != str(profile["_id"]):
-            await db.users.update_one({"_id": user_id}, {"$set": {"parentProfile": profile["_id"]}})
-            
-    return serialize_doc(profile)
+        profile = None
+        
+        if role == 'student':
+            student_profile_id = user.get("studentProfile")
+            if student_profile_id:
+                try:
+                    profile = await db.students.find_one({"_id": ObjectId(str(student_profile_id))})
+                except Exception:
+                    pass
+            if not profile:
+                profile = await db.students.find_one({"user": user_id})
+            if not profile:
+                roll_number = 'STU_' + str(int(datetime.now().timestamp()))[-6:]
+                profile = {
+                    "user": user_id,
+                    "rollNumber": roll_number,
+                    "department": "Computer Engineering",
+                    "course": "B.E.",
+                    "semester": 1,
+                    "batch": str(datetime.now().year),
+                    "dateOfBirth": datetime(2004, 1, 1),
+                    "gender": "Male",
+                    "isActive": True
+                }
+                res = await db.students.insert_one(profile)
+                profile["_id"] = res.inserted_id
+                
+            if not student_profile_id or str(student_profile_id) != str(profile["_id"]):
+                await db.users.update_one({"_id": user_id}, {"$set": {"studentProfile": profile["_id"]}})
+                
+        elif role in ['teacher', 'admin']:
+            teacher_profile_id = user.get("teacherProfile")
+            if teacher_profile_id:
+                try:
+                    profile = await db.teachers.find_one({"_id": ObjectId(str(teacher_profile_id))})
+                except Exception:
+                    pass
+            if not profile:
+                profile = await db.teachers.find_one({"user": user_id})
+            if not profile:
+                employee_id = 'EMP_' + str(int(datetime.now().timestamp()))[-6:]
+                profile = {
+                    "user": user_id,
+                    "employeeId": employee_id,
+                    "department": "Computer Engineering",
+                    "designation": "Lecturer",
+                    "qualification": "B.E. / M.E.",
+                    "experience": 1
+                }
+                res = await db.teachers.insert_one(profile)
+                profile["_id"] = res.inserted_id
+                
+            if not teacher_profile_id or str(teacher_profile_id) != str(profile["_id"]):
+                await db.users.update_one({"_id": user_id}, {"$set": {"teacherProfile": profile["_id"]}})
+                
+        elif role == 'parent':
+            parent_profile_id = user.get("parentProfile")
+            if parent_profile_id:
+                try:
+                    profile = await db.parents.find_one({"_id": ObjectId(str(parent_profile_id))})
+                except Exception:
+                    pass
+            if not profile:
+                profile = await db.parents.find_one({"user": user_id})
+            if not profile:
+                profile = {
+                    "user": user_id,
+                    "relation": "Father",
+                    "students": []
+                }
+                res = await db.parents.insert_one(profile)
+                profile["_id"] = res.inserted_id
+                
+            if not parent_profile_id or str(parent_profile_id) != str(profile["_id"]):
+                await db.users.update_one({"_id": user_id}, {"$set": {"parentProfile": profile["_id"]}})
+                
+        return serialize_doc(profile)
+    except Exception as err:
+        print(f"⚠️ Exception in ensure_user_profile: {err}")
+        return None
 
 # @route   POST /api/auth/register
 @router.post("/auth/register", status_code=status.HTTP_201_CREATED)
