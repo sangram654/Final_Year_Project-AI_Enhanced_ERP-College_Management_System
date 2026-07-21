@@ -277,8 +277,9 @@ if frontend_build_path:
             raise fastapi.HTTPException(status_code=404, detail="Not Found")
 
         # Serve any specific static asset that exists (images, PDFs, etc.)
+        # NEVER serve index.html from file - always use dynamic generation below
         file_path = os.path.join(frontend_build_path, catchall)
-        if catchall and os.path.isfile(file_path):
+        if catchall and catchall != "index.html" and os.path.isfile(file_path):
             return FileResponse(file_path)
 
         # Handle JS/CSS bundle hash mismatch: serve the actual latest bundle
