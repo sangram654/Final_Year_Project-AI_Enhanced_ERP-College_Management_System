@@ -115,10 +115,30 @@ async def auto_seed_db():
                 "updatedAt": datetime.utcnow()
             },
             {
+                "email": "rahulpatil123@gmail.com",
+                "password": hash_password("rahulpatil@123"),
+                "role": "student",
+                "firstName": "Rahul",
+                "lastName": "Patil",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
                 "email": "student@samarthcollege.edu.in",
                 "password": hash_password("student@123"),
                 "role": "student",
                 "firstName": "Rahul",
+                "lastName": "Patil",
+                "isActive": True,
+                "createdAt": datetime.utcnow(),
+                "updatedAt": datetime.utcnow()
+            },
+            {
+                "email": "sureshpatilparent123@gmail.com",
+                "password": hash_password("sureshpatil@123"),
+                "role": "parent",
+                "firstName": "Suresh",
                 "lastName": "Patil",
                 "isActive": True,
                 "createdAt": datetime.utcnow(),
