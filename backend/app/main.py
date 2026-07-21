@@ -27,14 +27,25 @@ socket_app = socketio.ASGIApp(sio)
 
 app = fastapi.FastAPI(title="🎓 SAMARTH COLLEGE ERP SYSTEM")
 
-# Setup CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+@app.get("/api/db-status")
+async def db_status():
+    try:
+        res = await db.command("ping")
+        user_count = await db.users.count_documents({})
+        return {
+            "success": True,
+            "status": "connected",
+            "database": db.name,
+            "users_count": user_count,
+            "is_cloud_db": "127.0.0.1" not in settings.MONGODB_URI
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "status": "connection_error",
+            "error": str(e),
+            "is_cloud_db": "127.0.0.1" not in settings.MONGODB_URI
+        }
 
 @app.on_event("startup")
 async def auto_seed_db():
