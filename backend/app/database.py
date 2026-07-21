@@ -2,13 +2,16 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from .config import settings
 
-# Initialize Async MongoDB client
-client = AsyncIOMotorClient(settings.MONGODB_URI)
+# Initialize Async MongoDB client with 5-second timeout
+client = AsyncIOMotorClient(settings.MONGODB_URI, serverSelectionTimeoutMS=5000)
 
-# Get the database (defaults to ERP_System if not specified in URI)
-db_name = settings.MONGODB_URI.split("/")[-1]
-if not db_name or "?" in db_name:
+# Get the database name
+try:
+    raw_name = settings.MONGODB_URI.split("/")[-1].split("?")[0]
+    db_name = raw_name if raw_name else "ERP_System"
+except Exception:
     db_name = "ERP_System"
+
 db = client[db_name]
 
 print(f"Connected to MongoDB Database: {db_name}")
