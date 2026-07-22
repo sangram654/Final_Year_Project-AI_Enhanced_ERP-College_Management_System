@@ -277,16 +277,19 @@ const CreateNotice = () => {
         navigate(-1); // Go back to previous page
     };
 
-    // Set default publish date to now if not set
+    // Set default publish date to now and default expiry date to 7 days from now
     useEffect(() => {
-        if (!formData.publishDate) {
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            setFormData(prev => ({
-                ...prev,
-                publishDate: now.toISOString().slice(0, 16)
-            }));
-        }
+        const now = new Date();
+        const localNow = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+        
+        const nextWeek = new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000));
+        const localNextWeek = new Date(nextWeek.getTime() - (nextWeek.getTimezoneOffset() * 60000));
+
+        setFormData(prev => ({
+            ...prev,
+            publishDate: prev.publishDate || localNow.toISOString().slice(0, 16),
+            expiryDate: prev.expiryDate || localNextWeek.toISOString().slice(0, 16)
+        }));
     }, []);
 
     return (

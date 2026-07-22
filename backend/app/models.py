@@ -26,7 +26,10 @@ def serialize_doc(doc: Any) -> Any:
     if isinstance(doc, ObjectId):
         return str(doc)
     if isinstance(doc, datetime):
-        return doc.isoformat()
+        res = doc.isoformat()
+        if not res.endswith("Z") and "+" not in res and "-" not in res[10:]:
+            return res + "Z"
+        return res
     return doc
 
 # User Authentication Schemas

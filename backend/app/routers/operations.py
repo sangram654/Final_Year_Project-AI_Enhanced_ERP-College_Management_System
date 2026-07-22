@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 # pyrefly: ignore [missing-import]
 from bson import ObjectId
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
 import math
 import os
@@ -267,11 +267,11 @@ async def save_biometric_attendance(payload: Dict[str, Any]):
     try:
         found_user = await db.users.find_one({"enrollId": int(user_val)})
         if found_user:
-            print(f"✅ Biometric attendance marked for {found_user.get('firstName')} {found_user.get('lastName')}")
+            print(f"[SUCCESS] Biometric attendance marked for {found_user.get('firstName')} {found_user.get('lastName')}")
         else:
-            print(f"⚠️ User with enrollId {user_val} not found in DB")
+            print(f"[WARNING] User with enrollId {user_val} not found in DB")
     except Exception as e:
-        print(f"❌ Error checking user for biometric attendance: {e}")
+        print(f"[ERROR] Error checking user for biometric attendance: {e}")
         
     return {"success": True, "data": serialize_doc(doc)}
 
@@ -287,14 +287,14 @@ async def set_device_command(payload: Dict[str, Any]):
     mode = payload.get("mode", "ATTENDANCE")
     enroll_id = payload.get("enrollId")
     device_command = {"mode": mode, "enrollId": enroll_id}
-    print(f"🆕 New Device Command Set: {device_command}")
+    print(f"[DEVICE COMMAND] New Device Command Set: {device_command}")
     return {"success": True}
 
 # @route   POST /api/attendance2/status
 @router.post("/attendance2/status")
 async def update_biometric_device_status(payload: Dict[str, Any]):
     message = payload.get("message")
-    print(f"📟 Biometric Device Status: {message}")
+    print(f"[DEVICE STATUS] Biometric Device Status: {message}")
     return {"success": True}
 
 # @route   GET /api/attendance2/shift-report
@@ -700,21 +700,27 @@ async def create_notice(payload: Dict[str, Any], current_user: dict = Depends(au
     priority = payload.get("priority", "medium")
     
     publish_date_val = payload.get("publishDate")
-    if isinstance(publish_date_val, str):
+    publish_date = None
+    if isinstance(publish_date_val, str) and publish_date_val:
         try:
-            publish_date = datetime.fromisoformat(publish_date_val.replace("Z", ""))
-        except:
+            dt = datetime.fromisoformat(publish_date_val.replace("Z", "+00:00"))
+            publish_date = dt.astimezone(timezone.utc).replace(tzinfo=None) if dt.tzinfo else dt
+        except Exception:
             publish_date = datetime.utcnow()
-    else:
+    if not publish_date:
         publish_date = datetime.utcnow()
         
     expiry_date_val = payload.get("expiryDate")
     expiry_date = None
-    if isinstance(expiry_date_val, str):
+    if isinstance(expiry_date_val, str) and expiry_date_val:
         try:
-            expiry_date = datetime.fromisoformat(expiry_date_val.replace("Z", ""))
-        except:
-            pass
+            dt = datetime.fromisoformat(expiry_date_val.replace("Z", "+00:00"))
+            expiry_date = dt.astimezone(timezone.utc).replace(tzinfo=None) if dt.tzinfo else dt
+        except Exception:
+            expiry_date = None
+            
+    if not expiry_date:
+        expiry_date = publish_date + timedelta(days=7)
             
     targeting = payload.get("targeting", {"type": "all"})
     attachments = payload.get("attachments", [])
@@ -746,7 +752,7 @@ async def create_notice(payload: Dict[str, Any], current_user: dict = Depends(au
     doc["createdBy"] = serialize_doc(current_user)
     
     # Broadcast notice to socket rooms (notified to clients)
-    print(f"📢 Broadcast new notice: {title}")
+    print(f"[NOTICE BROADCAST] Broadcast new notice: {title}")
     
     return {"success": True, "data": serialize_doc(doc)}
 
@@ -908,9 +914,18 @@ async def update_notice(notice_id: str, payload: Dict[str, Any], current_user: d
     updated = await db.notices.find_one({"_id": ObjectId(notice_id)})
     return {"success": True, "data": serialize_doc(updated)}
 
-# @route   DELETE /api/notices/:id
 @router.delete("/notices/{notice_id}")
-async def delete_notice(notice_id: str, current_user: dict = Depends(authorize("admin", "super_admin"))):
+async def delete_notice(notice_id: str, current_user: dict = Depends(authorize("admin", "super_admin", "receptionist", "teacher"))):
+    notice = await db.notices.find_one({"_id": ObjectId(notice_id)})
+    if not notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+        
+    created_by_id = notice.get("createdBy")
+    if created_by_id:
+        creator = await db.users.find_one({"_id": ObjectId(created_by_id)})
+        if creator and creator.get("role") in ["super_admin", "superadmin"] and current_user.get("role") not in ["super_admin", "superadmin"]:
+            raise HTTPException(status_code=403, detail="Only super admin can delete notices created by super admin")
+            
     await db.notices.delete_one({"_id": ObjectId(notice_id)})
     return {"success": True, "message": "Notice deleted successfully"}
 

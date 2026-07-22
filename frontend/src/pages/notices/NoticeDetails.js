@@ -11,6 +11,16 @@ import { toast } from 'react-toastify';
 import { hasPermission } from '../../utils/permissions';
 import './NoticeDetails.css';
 
+const parseDate = (d) => {
+    if (!d) return null;
+    if (typeof d === 'string') {
+        if (!d.endsWith('Z') && !d.includes('+') && !d.slice(10).includes('-')) {
+            return new Date(d + 'Z');
+        }
+    }
+    return new Date(d);
+};
+
 const NoticeDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -21,6 +31,13 @@ const NoticeDetails = () => {
 
     // Check if user can manage notices
     const canManage = hasPermission(user?.role, 'communication', 'update');
+
+    // Check if the notice was created by a super admin
+    const isCreatedBySuperAdmin = notice && 
+        (notice.creator?.role === 'super_admin' || notice.creator?.role === 'superadmin' ||
+         notice.createdBy?.role === 'super_admin' || notice.createdBy?.role === 'superadmin');
+
+    const canDeleteOrEdit = notice && (!isCreatedBySuperAdmin || user?.role === 'super_admin' || user?.role === 'superadmin');
 
     // Fetch notice details
     const fetchNotice = async () => {
@@ -64,15 +81,18 @@ const NoticeDetails = () => {
         window.print();
     };
 
-    // Format date
+    // Format date in Indian Standard Time (IST - Asia/Kolkata)
     const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        const date = parseDate(dateString);
+        if (!date || isNaN(date.getTime())) return '';
+        return date.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            hour12: true
         });
     };
 
@@ -154,7 +174,7 @@ const NoticeDetails = () => {
                         Back
                     </button>
 
-                    <div className="action-buttons">
+                    <div className="action-buttons" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button
                             className="btn-action"
                             onClick={handlePrint}
@@ -163,23 +183,38 @@ const NoticeDetails = () => {
                             <FiPrinter />
                         </button>
 
-                        {canManage && notice.createdBy === user?.id && (
-                            <>
-                                <button
-                                    className="btn-action edit"
-                                    onClick={() => navigate(`../notices/${id}/edit`)}
-                                    title="Edit Notice"
-                                >
-                                    <FiEdit />
-                                </button>
-                                <button
-                                    className="btn-action delete"
-                                    onClick={handleDelete}
-                                    title="Delete Notice"
-                                >
-                                    <FiTrash2 />
-                                </button>
-                            </>
+                        {canDeleteOrEdit && (
+                            <button
+                                className="btn-action edit"
+                                onClick={() => navigate(`../notices/${id}/edit`)}
+                                title="Edit Notice"
+                            >
+                                <FiEdit />
+                            </button>
+                        )}
+
+                        {canDeleteOrEdit && (
+                            <button
+                                className="btn-action delete"
+                                onClick={handleDelete}
+                                title="Delete Notice"
+                                style={{
+                                    backgroundColor: '#dc2626',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    width: '38px',
+                                    height: '38px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 4px rgba(220, 38, 38, 0.25)',
+                                    padding: 0
+                                }}
+                            >
+                                <FiTrash2 style={{ fontSize: '1.2rem' }} />
+                            </button>
                         )}
                     </div>
                 </div>
@@ -281,12 +316,35 @@ const NoticeDetails = () => {
                 )}
 
                 {/* Expiry Warning / Status Banner */}
-                {notice.expiryDate && new Date(notice.expiryDate) < new Date() ? (
-                    <div className="expiry-warning" style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
-                        <FiClock className="warning-icon" />
-                        <span>
-                            Notice Expired on {formatDate(notice.expiryDate)} (Archived in Logs)
-                        </span>
+                {notice.expiryDate && parseDate(notice.expiryDate) < new Date() ? (
+                    <div className="expiry-warning" style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FiClock className="warning-icon" />
+                            <span>
+                                Notice Expired on {formatDate(notice.expiryDate)} (Archived in Logs)
+                            </span>
+                        </div>
+                        {canDeleteOrEdit && (
+                            <button
+                                onClick={handleDelete}
+                                style={{
+                                    backgroundColor: '#dc2626',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '6px 14px',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 4px rgba(220, 38, 38, 0.2)'
+                                }}
+                            >
+                                <FiTrash2 /> Delete Expired Notice
+                            </button>
+                        )}
                     </div>
                 ) : notice.expiryDate && new Date(notice.expiryDate) <= new Date(Date.now() + 24 * 60 * 60 * 1000) ? (
                     <div className="expiry-warning">

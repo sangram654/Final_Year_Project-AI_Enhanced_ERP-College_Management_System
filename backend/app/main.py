@@ -204,9 +204,9 @@ async def auto_seed_db():
                     {"email": u["email"]},
                     {"$set": {"password": u["password"], "isActive": True}}
                 )
-        print("✅ Demo accounts verified and active in MongoDB Database!")
+        print("[SUCCESS] Demo accounts verified and active in MongoDB Database!")
     except Exception as e:
-        print(f"⚠️ Auto-seed warning: {e}")
+        print(f"[WARNING] Auto-seed warning: {e}")
 
 # Mount Static Uploads
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
@@ -227,11 +227,18 @@ app.mount("/socket.io", socket_app)
 from fastapi.responses import FileResponse
 
 # Serve React Frontend static files if build exists
+base_dir = os.path.dirname(os.path.abspath(__file__))
+backend_dir = os.path.dirname(base_dir)
+root_dir = os.path.dirname(backend_dir)
+
 possible_paths = [
     os.path.abspath("./static_frontend"),
     os.path.abspath("static_frontend"),
     os.path.abspath("../frontend/build"),
     os.path.abspath("frontend/build"),
+    os.path.join(root_dir, "static_frontend"),
+    os.path.join(root_dir, "frontend", "build"),
+    os.path.join(backend_dir, "static_frontend"),
 ]
 
 frontend_build_path = None
@@ -257,6 +264,8 @@ if frontend_build_path:
                                  if f.startswith("main.") and f.endswith(".js")
                                  and not f.endswith(".map") and not f.endswith(".txt")]
                 if js_candidates:
+                    # Sort by modification time (newest first)
+                    js_candidates.sort(key=lambda x: os.path.getmtime(os.path.join(js_dir, x)), reverse=True)
                     js_file = js_candidates[0]
             css_dir = os.path.join(build_path, "static", "css")
             if os.path.exists(css_dir):
@@ -264,6 +273,8 @@ if frontend_build_path:
                                   if f.startswith("main.") and f.endswith(".css")
                                   and not f.endswith(".map")]
                 if css_candidates:
+                    # Sort by modification time (newest first)
+                    css_candidates.sort(key=lambda x: os.path.getmtime(os.path.join(css_dir, x)), reverse=True)
                     css_file = css_candidates[0]
         except Exception:
             pass

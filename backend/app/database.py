@@ -22,11 +22,11 @@ try:
     db_name = raw_name if raw_name else "ERP_System"
     db = client[db_name]
     if "127.0.0.1" in settings.MONGODB_URI or "localhost" in settings.MONGODB_URI:
-        print(f"⚠️ [DATABASE NOTICE]: MONGODB_URI is set to localhost ({db_name}). Set 'MONGODB_URI' in Railway Variables to Cloud MongoDB URL.")
+        print(f"[DATABASE NOTICE]: MONGODB_URI is set to localhost ({db_name}). Set 'MONGODB_URI' in Railway Variables to Cloud MongoDB URL.")
     else:
         print(f"Connected to MongoDB Cloud Database: {db_name}")
 except Exception as err:
-    print(f"⚠️ Failed to parse MONGODB_URI ({err}). Using fallback MongoDB client.")
+    print(f"[DATABASE ERROR]: Failed to parse MONGODB_URI ({err}). Using fallback MongoDB client.")
     client = AsyncIOMotorClient("mongodb://127.0.0.1:27017/ERP_System", serverSelectionTimeoutMS=2000)
     db = client["ERP_System"]
 

@@ -14,6 +14,22 @@ from ..utils.email_service import trigger_welcome_email
 
 router = APIRouter()
 
+DEMO_PASSWORDS = {
+    "superadmin@samarthcollege.edu.in": "superadmin@123",
+    "superadmin123@gmail.com": "superadmin@123",
+    "admin@samarthcollege.edu.in": "admin@123",
+    "admin123@gmail.com": "admin@123",
+    "teacher@samarthcollege.edu.in": "teacher@123",
+    "ramkadam123@gmail.com": "ramkadam@123",
+    "student@samarthcollege.edu.in": "student@123",
+    "rahulpatil123@gmail.com": "rahulpatil@123",
+    "parent@samarthcollege.edu.in": "parent@123",
+    "sureshpatilparent123@gmail.com": "sureshpatil@123",
+    "accountant@gmail.com": "accountant@123",
+    "librarian@gmail.com": "librarian@123",
+    "receptionist@gmail.com": "receptionist@123",
+}
+
 # Helper to ensure role-specific profile document exists
 async def ensure_user_profile(user: dict) -> Optional[dict]:
     try:
@@ -105,7 +121,7 @@ async def ensure_user_profile(user: dict) -> Optional[dict]:
                 
         return serialize_doc(profile)
     except Exception as err:
-        print(f"⚠️ Exception in ensure_user_profile: {err}")
+        print(f"[WARNING] Exception in ensure_user_profile: {err}")
         return None
 
 # @route   POST /api/auth/register
@@ -321,10 +337,10 @@ async def login(payload: UserLogin):
     except HTTPException:
         raise
     except Exception as err:
-        print(f"❌ Database query error during login: {err}")
+        print(f"[ERROR] Database query error during login: {err}")
         email_clean = payload.email.strip().lower()
         if email_clean in DEMO_PASSWORDS and payload.password == DEMO_PASSWORDS[email_clean]:
-            print(f"⚡ Failsafe demo login activated for {email_clean}")
+            print(f"[INFO] Failsafe demo login activated for {email_clean}")
             role_map = {
                 "superadmin@samarthcollege.edu.in": "super_admin",
                 "superadmin123@gmail.com": "super_admin",

@@ -1,13 +1,50 @@
 import React from 'react';
 import {
     FiBell, FiAlertTriangle, FiClock, FiUser,
-    FiCalendar, FiEye, FiDownload, FiExternalLink
+    FiCalendar, FiEye, FiDownload, FiExternalLink, FiTrash2
 } from 'react-icons/fi';
+import { useAuth } from '../../context/AuthContext';
 import './NoticeCard.css';
 
-const NoticeCard = ({ notice, onRead, onClick, className = '' }) => {
+const parseDate = (d) => {
+    if (!d) return null;
+    if (typeof d === 'string') {
+        if (!d.endsWith('Z') && !d.includes('+') && !d.slice(10).includes('-')) {
+            return new Date(d + 'Z');
+        }
+    }
+    return new Date(d);
+};
+
+const NoticeCard = ({ notice, onRead, onDelete, onClick, className = '' }) => {
+    const { user } = useAuth();
+    const pubDate = parseDate(notice.publishDate) || new Date();
+    const expDate = parseDate(notice.expiryDate);
+    const isExpired = expDate && expDate < new Date();
+
+    // Check if the notice was created by a super admin
+    const isCreatedBySuperAdmin = 
+        (notice.creator?.role === 'super_admin' || notice.creator?.role === 'superadmin' ||
+         notice.createdBy?.role === 'super_admin' || notice.createdBy?.role === 'superadmin');
+
+    // Super Admin notices can only be deleted by Super Admin
+    const canDeleteNotice = onDelete && (!isCreatedBySuperAdmin || user?.role === 'super_admin' || user?.role === 'superadmin');
+
+    const formatIST = (dateObj) => {
+        if (!dateObj || isNaN(dateObj.getTime())) return '';
+        return dateObj.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
     const formatDate = (dateString) => {
-        const date = new Date(dateString);
+        const date = parseDate(dateString) || new Date();
         const now = new Date();
         const diffTime = Math.abs(now - date);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -15,7 +52,7 @@ const NoticeCard = ({ notice, onRead, onClick, className = '' }) => {
         if (diffDays === 1) return 'Today';
         if (diffDays === 2) return 'Yesterday';
         if (diffDays <= 7) return `${diffDays - 1} days ago`;
-        return date.toLocaleDateString();
+        return date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
     };
 
     const getPriorityIcon = (priority) => {
@@ -76,6 +113,13 @@ const NoticeCard = ({ notice, onRead, onClick, className = '' }) => {
         }
     };
 
+    const handleDeleteClick = (e) => {
+        e.stopPropagation();
+        if (onDelete) {
+            onDelete(notice._id);
+        }
+    };
+
     return (
         <div
             className={`${getPriorityClass(notice.priority)} ${!notice.isRead ? 'unread' : 'read'} ${className}`}
@@ -97,12 +141,38 @@ const NoticeCard = ({ notice, onRead, onClick, className = '' }) => {
                     </span>
                 </div>
 
-                <div className="notice-date" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: '0.8rem' }}>
-                    <div><FiCalendar className="date-icon" /> <strong>Start:</strong> {new Date(notice.publishDate).toLocaleDateString()} {new Date(notice.publishDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                    {notice.expiryDate && (
-                        <div style={{ color: new Date(notice.expiryDate) < new Date() ? '#dc2626' : 'inherit' }}>
-                            <FiClock className="date-icon" /> <strong>End:</strong> {new Date(notice.expiryDate).toLocaleDateString()} {new Date(notice.expiryDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
+                <div className="notice-date" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontSize: '0.8rem' }}>
+                        <div><FiCalendar className="date-icon" /> <strong>Start:</strong> {formatIST(pubDate)}</div>
+                        {expDate && (
+                            <div style={{ color: isExpired ? '#dc2626' : 'inherit' }}>
+                                <FiClock className="date-icon" /> <strong>End:</strong> {formatIST(expDate)}
+                            </div>
+                        )}
+                    </div>
+                    {canDeleteNotice && (
+                        <button
+                            className="action-btn delete-btn"
+                            onClick={handleDeleteClick}
+                            title="Delete Notice"
+                            style={{
+                                backgroundColor: '#dc2626',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                width: '32px',
+                                height: '32px',
+                                minWidth: '32px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 4px rgba(220, 38, 38, 0.25)',
+                                flexShrink: 0
+                            }}
+                        >
+                            <FiTrash2 style={{ fontSize: '1.1rem' }} />
+                        </button>
                     )}
                 </div>
             </div>
@@ -146,8 +216,41 @@ const NoticeCard = ({ notice, onRead, onClick, className = '' }) => {
                     </span>
                 </div>
 
-                {/* Action buttons */}
-                <div className="notice-actions">
+                {/* Action buttons & Expired status */}
+                <div className="notice-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {isExpired && (
+                        <div className="expiry-warning" style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5', margin: 0, padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <FiClock className="expiry-icon" />
+                            <span>Expired</span>
+                        </div>
+                    )}
+
+                    {canDeleteNotice && (
+                        <button
+                            className="action-btn delete-btn"
+                            onClick={handleDeleteClick}
+                            title="Delete notice"
+                            style={{
+                                backgroundColor: '#dc2626',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                width: '32px',
+                                height: '32px',
+                                minWidth: '32px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                boxShadow: '0 2px 4px rgba(220, 38, 38, 0.25)',
+                                flexShrink: 0
+                            }}
+                        >
+                            <FiTrash2 style={{ fontSize: '1.1rem' }} />
+                        </button>
+                    )}
+
                     {!notice.isRead && (
                         <button
                             className="action-btn mark-read-btn"
@@ -172,19 +275,6 @@ const NoticeCard = ({ notice, onRead, onClick, className = '' }) => {
             <div className={`read-status ${notice.isRead ? 'read' : 'unread'}`}>
                 <div className="read-dot"></div>
             </div>
-
-            {/* Expiry warning / status */}
-            {notice.expiryDate && new Date(notice.expiryDate) < new Date() ? (
-                <div className="expiry-warning" style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fca5a5' }}>
-                    <FiClock className="expiry-icon" />
-                    <span>Expired</span>
-                </div>
-            ) : notice.expiryDate && new Date(notice.expiryDate) <= new Date(Date.now() + 24 * 60 * 60 * 1000) ? (
-                <div className="expiry-warning">
-                    <FiClock className="expiry-icon" />
-                    <span>Expires soon</span>
-                </div>
-            ) : null}
         </div>
     );
 };

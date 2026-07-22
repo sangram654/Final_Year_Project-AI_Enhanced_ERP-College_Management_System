@@ -5,6 +5,7 @@ import {
 } from 'react-icons/fi';
 import NoticeCard from './NoticeCard';
 import { noticeService } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import './NoticeList.css';
 
@@ -15,6 +16,8 @@ const NoticeList = ({
     showSearch = true,
     className = ''
 }) => {
+    const { user } = useAuth();
+    const canDelete = ['super_admin', 'admin', 'teacher', 'receptionist'].includes(user?.role);
     const [notices, setNotices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -116,6 +119,20 @@ const NoticeList = ({
         } catch (error) {
             console.error('Error marking notice as read:', error);
             toast.error('Failed to mark notice as read');
+        }
+    };
+
+    // Handle delete notice
+    const handleDeleteNotice = async (noticeId) => {
+        if (!window.confirm('Are you sure you want to delete this notice?')) return;
+        try {
+            await noticeService.delete(noticeId);
+            setNotices(prev => prev.filter(notice => notice._id !== noticeId));
+            setPagination(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }));
+            toast.success('Notice deleted successfully');
+        } catch (error) {
+            console.error('Error deleting notice:', error);
+            toast.error('Failed to delete notice');
         }
     };
 
@@ -332,6 +349,7 @@ const NoticeList = ({
                                 key={notice._id}
                                 notice={notice}
                                 onRead={handleMarkAsRead}
+                                onDelete={handleDeleteNotice}
                                 onClick={onNoticeClick}
                             />
                         ))}
