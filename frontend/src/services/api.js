@@ -28,6 +28,11 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
+            // Do not intercept or clear token if the request was to login
+            if (error.config?.url?.includes('/auth/login')) {
+                return Promise.reject(error);
+            }
+            
             // Token expired or invalid
             localStorage.removeItem('token');
             

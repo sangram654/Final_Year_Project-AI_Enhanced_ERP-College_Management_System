@@ -337,7 +337,7 @@ async def get_gallery(current_user: dict = Depends(get_current_user)):
 
 # @route   GET /api/gallery/carousel
 @router.get("/gallery/carousel")
-async def get_gallery_carousel(current_user: dict = Depends(get_current_user)):
+async def get_gallery_carousel():
     carousel = await db.collegegalleries.find({"isFeatured": True}).sort("createdAt", -1).limit(5).to_list(5)
     return {"success": True, "data": serialize_doc(carousel)}
 
@@ -394,7 +394,7 @@ async def delete_gallery(image_id: str, current_user: dict = Depends(authorize("
 
 # @route   GET /api/college-info
 @router.get("/college-info")
-async def get_college_info(current_user: dict = Depends(get_current_user)):
+async def get_college_info():
     return {
         "success": True,
         "data": {
